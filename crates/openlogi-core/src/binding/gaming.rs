@@ -44,6 +44,35 @@ pub const G502_LIGHTSPEED: GamingLayout = GamingLayout {
     stock_dpi_presets: &[400, 800, 1600, 3200, 6400],
 };
 
+/// G903 LIGHTSPEED (wpid `0x4087`), dumped in #2178. Ambidextrous: the left
+/// side pair is Back and Forward, the right side pair is G6 and G7, and the
+/// DPI keys are G8 (down, left) and G9 (up, right). Slot 11 never reports.
+pub const G903_LIGHTSPEED: GamingLayout = GamingLayout {
+    model_keys: &["04087"],
+    slots: &[
+        ButtonId::LeftClick,
+        ButtonId::RightClick,
+        ButtonId::MiddleClick,
+        ButtonId::Back,
+        ButtonId::Forward,
+        ButtonId::G6,
+        ButtonId::G7,
+        ButtonId::G8,
+        ButtonId::G9,
+        ButtonId::WheelTiltLeft,
+        ButtonId::WheelTiltRight,
+    ],
+    host_silent: &[
+        ButtonId::G6,
+        ButtonId::G7,
+        ButtonId::G8,
+        ButtonId::G9,
+        ButtonId::WheelTiltLeft,
+        ButtonId::WheelTiltRight,
+    ],
+    stock_dpi_presets: &[400, 800, 1600, 3200, 6400],
+};
+
 /// A gaming mouse whose layout nobody has dumped. Its first five slots are
 /// the standard HID buttons, which the OS input hook remaps without host
 /// mode. G6 and up differ per model and are not guessed.
@@ -63,7 +92,7 @@ pub const STANDARD_BUTTONS: GamingLayout = GamingLayout {
     stock_dpi_presets: &[],
 };
 
-const LAYOUTS: &[&GamingLayout] = &[&G502_LIGHTSPEED];
+const LAYOUTS: &[&GamingLayout] = &[&G502_LIGHTSPEED, &G903_LIGHTSPEED];
 
 /// Whether a device is a G-series mouse, and which buttons it offers. The
 /// agent, the tabs and the Buttons panel all ask this one verdict.
@@ -178,6 +207,29 @@ mod tests {
         assert!(!layout.remappable().any(|b| b == ButtonId::LeftClick));
         assert!(layout.needs_host_mode(ButtonId::G7));
         assert!(!layout.needs_host_mode(ButtonId::Back));
+    }
+
+    #[test]
+    fn g903_lightspeed_slots_match_the_hardware_dump() {
+        let layout = GamingLayout::for_model_key("04087").unwrap();
+        assert_eq!(layout, &G903_LIGHTSPEED);
+        assert_eq!(layout.button_for_g_number(4), Some(ButtonId::Back));
+        assert_eq!(layout.button_for_g_number(5), Some(ButtonId::Forward));
+        assert_eq!(layout.button_for_g_number(6), Some(ButtonId::G6));
+        assert_eq!(layout.button_for_g_number(7), Some(ButtonId::G7));
+        assert_eq!(layout.button_for_g_number(8), Some(ButtonId::G8));
+        assert_eq!(layout.button_for_g_number(9), Some(ButtonId::G9));
+        assert_eq!(
+            layout.button_for_g_number(10),
+            Some(ButtonId::WheelTiltLeft)
+        );
+        assert_eq!(
+            layout.button_for_g_number(11),
+            Some(ButtonId::WheelTiltRight)
+        );
+        assert_eq!(layout.button_for_g_number(12), None);
+        assert!(layout.needs_host_mode(ButtonId::G8));
+        assert!(!layout.needs_host_mode(ButtonId::Forward));
     }
 
     #[test]
